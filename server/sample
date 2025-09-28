@@ -1,0 +1,20 @@
+# MONGO_URI = 'mongodb+srv://sachinAdmin:skofficial116@college4sem.t10io.mongodb.net/'
+
+
+MONGODB_URI=mongodb+srv://sachinAdmin:skofficial116@college4sem.t10io.mongodb.net/lms
+
+CLERK_WEBHOOK_SECRET= "whsec_+voNpEHxqDzl319Fw0Cjk6CvOWxK71ao"
+
+CLERK_PUBLISHABLE_KEY=pk_test_YWxlcnQtdmlwZXItMzcuY2xlcmsuYWNjb3VudHMuZGV2JA
+CLERK_SECRET_KEY=sk_test_yM1e2uVRLsEdE8b6NqOX507nMyKS1RaAP7egIGm1FT
+
+
+CLOUDINARY_NAME="dc5gj9aho"
+CLOUDINARY_API_KEY="415735788681154"
+CLOUDINARY_SECRET_KEY="q8h61BQVaFNV5D25uDaG-b_n-1s"
+
+
+
+CURRENCY="USD"
+
+STRIPE_WEBHOOK_SECRET ="whsec_Q5sQmJAQ0HeNY4mxKJpJSYKeYyEFU0eF"
