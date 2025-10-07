@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { dummyTeams, currentPlayer } from "../../../assets/assets";
+import { AppContext } from "../../../context/AppContext";
 
 // -------------------- AUCTION TIMER --------------------
 const AuctionTimer = ({ endTime, isPaused, onTimeEnd }) => {

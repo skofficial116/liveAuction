@@ -1,4 +1,5 @@
-import React from "react";
+import React from "react";    
+
 import { Route, Routes, useMatch } from "react-router-dom";
 import "quill/dist/quill.snow.css";
 import { ToastContainer } from "react-toastify";
@@ -24,10 +25,6 @@ import AdminTeamsPage from "./pages/auction/admin/TeamPage.jsx";
 import ManageSetsPage from "./pages/auction/admin/ManageSets.jsx";
 import ManagePlayersPage from "./pages/auction/admin/ManagePlayersPage.jsx";
 import AdminSettings from "./pages/auction/admin/Settings.jsx";
-import AdminNavbar from "./components/auction/admin/AdminNavbar.jsx";
-import CaptainNavbar from "./components/auction/captain/CaptainNavbar.jsx";
-import AudienceNavbar from "./components/auction/audience/AudienceNavbar.jsx";
-
 const App = () => {
   const isAdminRoute = useMatch("/admin/*");
   const isCaptainRoute = useMatch("/captain/*");
@@ -38,7 +35,7 @@ const App = () => {
   };
 
   return (
-    <div className="text-default min-h-screen  bg-gradient-to-b from-[#3C467B] via-[#50589C] to-[#636CCB] min-h-screen">
+    <div className="text-default min-h-screen  bg-gradient-to-b from-[#3C467B] via-[#50589C] to-[#636CCB]">
       <ToastContainer></ToastContainer>
 
       {renderNavbar()}
@@ -77,3 +74,68 @@ const App = () => {
 };
 
 export default App;
+// import "./App.css";
+// import { useState, useEffect } from "react";
+
+// import io from "socket.io-client";
+// import { nanoid } from "nanoid";
+
+// const socket = io.connect("http://localhost:3100");
+// const username = nanoid(4);
+// console.log("Username: ", username);
+
+// function App() {
+//   const [message, setMessage] = useState("");
+//   const [chat, setChat] = useState([]);
+
+//   const sendChat = (e) => {
+//     e.preventDefault();
+//     socket.emit("chat", { message, username });
+//     setMessage("");
+//   };
+
+//   useEffect(() => {
+//     socket.on("chat", (payload) => {
+//       setChat((prevChat) => [...prevChat, payload]);
+//       console.log("Message from server: ", payload);
+//     });
+
+//     socket.on("chatHistory", (messages) => {
+//       setChat(messages);
+//       console.log("Chat history: ", messages);
+//     });
+
+//     // Cleanup listeners on unmount
+//     return () => {
+//       socket.off("chat");
+//       socket.off("chatHistory");
+//     };
+//   }, []);
+//   return (
+//     <div className="App">
+//       <header className="App-header">
+//         <h1>Socket.io Chat App</h1>
+//         {chat.map((payload, index) => {
+//           return (
+//             <p key={index}>
+//               {payload.message}: {payload.username}
+//             </p>
+//           );
+//         })}
+//         <form onSubmit={sendChat}>
+//           <input
+//             type="text"
+//             name="message"
+//             value={message}
+//             onChange={(e) => setMessage(e.target.value)}
+//           />
+
+//           <button type="submit"> Send </button>
+//         </form>
+//       </header>
+//     </div>
+//   );
+// }
+
+
+// export default App;

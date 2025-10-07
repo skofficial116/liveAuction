@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { dummyTeams } from "../../../assets/assets";
 import { currentPlayer } from "../../../assets/assets";
 
+import { AppContext } from "../../../context/AppContext";
+import { useContext } from "react";
+
 // Auction Timer Component
 const AuctionTimer = ({ endTime }) => {
   const [timeLeft, setTimeLeft] = useState(0);
@@ -34,51 +37,68 @@ const AuctionTimer = ({ endTime }) => {
 };
 
 // Current Player Card
-const CurrentPlayerCard = ({ player, highestBid }) => (
-  <div className="bg-white rounded-lg shadow-lg p-6 text-center space-y-4">
-    <h2 className="text-2xl font-bold">{player.name}</h2>
-    <p className="text-gray-600">{player.fact}</p>
-    <p className="text-gray-500">Base Price: ${player.basePrice}K</p>
+const CurrentPlayerCard = () => {
+  //   const {currentWinningBid}= useContext(AppContext)
+  //   // const [player, setPlayer]= useState({})
 
-    {/* Highest Bid Section */}
-    {highestBid ? (
-      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-        <h3 className="text-lg font-semibold text-blue-700">
-          Current Highest Bid
-        </h3>
-        <p className="text-3xl font-bold text-blue-900">
-          ${highestBid.amount}K
-        </p>
-        <div className="flex items-center justify-center mt-2 space-x-2">
-          <img
-            src={highestBid.teamLogo}
-            alt={highestBid.team}
-            className="w-8 h-8 object-contain"
-          />
-          <span className="text-gray-800 font-semibold">{highestBid.team}</span>
+  //  const bid= currentWinningBid();
+  // // highestBid, player
+  //  useEffect(()=>{
+  // setPlayer(bid.)
+  //  }, [bid])
+  let player = currentPlayer;
+  let highestBid = {
+    team: "Red Warriors",
+    teamLogo: "https://via.placeholder.com/40?text=RW",
+    amount: 250,
+  };
+  return (
+    <div className="bg-white rounded-lg shadow-lg p-6 text-center space-y-4">
+      <h2 className="text-2xl font-bold">{player.name}</h2>
+      <p className="text-gray-600">{player.fact}</p>
+      <p className="text-gray-500">Base Price: ${player.basePrice}K</p>
+
+      {/* Highest Bid Section */}
+      {highestBid ? (
+        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <h3 className="text-lg font-semibold text-blue-700">
+            Current Highest Bid
+          </h3>
+          <p className="text-3xl font-bold text-blue-900">
+            ${highestBid.amount}K
+          </p>
+          <div className="flex items-center justify-center mt-2 space-x-2">
+            <img
+              src={highestBid.teamLogo}
+              alt={highestBid.team}
+              className="w-8 h-8 object-contain"
+            />
+            <span className="text-gray-800 font-semibold">
+              {highestBid.team}
+            </span>
+          </div>
         </div>
-      </div>
-    ) : (
-      <p className="text-gray-500 italic">No bids yet</p>
-    )}
+      ) : (
+        <p className="text-gray-500 italic">No bids yet</p>
+      )}
 
-    {/* Player Stats */}
-    <div className="text-sm text-gray-700 space-y-1">
-      <p>Bat Skill: {player.batSkill}</p>
-      <p>Bowl Skill: {player.bowlSkill}</p>
-      {/* <p>Wickets: {player.stats.wickets}</p> */}
+      {/* Player Stats */}
+      <div className="text-sm text-gray-700 space-y-1">
+        <p>Bat Skill: {player.batSkill}</p>
+        <p>Bowl Skill: {player.bowlSkill}</p>
+        {/* <p>Wickets: {player.stats.wickets}</p> */}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Bid Controls
 const BidControls = ({ currentBid, maxBudget, onBid }) => {
   const [bid, setBid] = useState(currentBid || 0);
   maxBudget = 310;
   let step = bid < 100 ? 10 : 20;
-    let nextBid = bid + step;
+  let nextBid = bid + step;
   const incrementBid = () => {
-    
     if (nextBid > maxBudget) {
       alert("Cannot bid more than your budget!");
       return;
@@ -131,18 +151,28 @@ const NeedMoreTimeButton = () => {
 };
 
 // Bid History
-const BidHistory = ({ bids }) => (
-  <div className="bg-white rounded-lg shadow-md p-4 space-y-2">
-    <h3 className="text-lg font-semibold">Bid History</h3>
-    <ul className="text-gray-700 text-sm space-y-1">
-      {bids.map((bid, idx) => (
-        <li key={idx}>
-          <strong>{bid.team}</strong> → ${bid.amount}K
-        </li>
-      ))}
-    </ul>
-  </div>
-);
+const BidHistory = () => {
+  const { currentPlayerBidHistory, bidHistory } = useContext(AppContext);
+  
+console.log(currentPlayerBidHistory)
+  useEffect(() => {
+    bidHistory(); // fetch initial bid history
+  }, [bidHistory]);
+
+  return (
+    <div className="bg-white rounded-lg shadow-md p-4 space-y-2">
+      <h3 className="text-lg font-semibold">Bid History</h3>
+      <ul className="text-gray-700 text-sm space-y-1">
+        {currentPlayerBidHistory.map((bid, idx) => (
+          <li key={idx}>
+            <strong>{bid.teamName}</strong> → ${bid.amount}K,{" "}
+            <i>{bid.timestamp}</i>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
 
 // Team Budgets
 const TeamBudgets = ({ dummyTeams }) => (
@@ -229,7 +259,7 @@ const CaptainCurrentBid = () => {
         </div>
 
         <div className="space-y-4">
-          <BidHistory bids={bids} />
+          <BidHistory />
           <TeamBudgets dummyTeams={dummyTeams} />
           <Notifications messages={notifications} />
         </div>

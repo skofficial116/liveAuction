@@ -1,154 +1,75 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import humanizeDuration from "humanize-duration";
-import { useAuth, useUser } from "@clerk/clerk-react";
-import axios from "axios";
-import { toast } from "react-toastify";
+// import { toast } from "react-toastify";
+import { io } from "socket.io-client";
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const AppContext = createContext();
 
 export const AppContextProvider = (props) => {
-  const currency = import.meta.env.VITE_CURRENCY;
   const navigate = useNavigate();
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  const [currentPlayerBidHistory, setCurrentPlayerBidHistory] = useState([]);
+  const [usersConnected, setUsersConnected] = useState(0);
 
-  const [allCourses, setAllCourses] = useState([]);
-  const [isEducator, setIsEducator] = useState(false);
-  const [enrolledCourses, setEnrolledCourses] = useState([]);
-  const [userData, setUserData] = useState(null);
+  const socket = io.connect("http://localhost:3100");
 
-  const { getToken } = useAuth();
-  const { user } = useUser();
+  const playerId = "68decb1aaa33d607dc4c5580";
+  const auctionId = "68decb1aaa33d607dc4c5571";
 
-  //fetch all courses
-
-  const fetchAllCourses = async () => {
-    // setAllCourses(dummyCourses);
-    try {
-      const { data } = await axios.get(backendUrl + "/api/course/all");
-      if (data.success) {
-        setAllCourses(data.courses);
-      } else {
-        toast.error(data.message);
-      }
-    } catch (error) {
-      toast.error(error.message);
-    }
+  const placeBid = (playerId, bid, teamId) => {
+    socket.emit("placeBid", { playerId, bid, teamId });
   };
 
-  const fetchUserData = async () => {
-    if (user.publicMetadata.role === "educator") {
-      setIsEducator(true);
-    }
-    
-    try {
-      const token = await getToken();
-      const { data } = await axios.get(backendUrl + "/api/user/data", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (data.success) {
-        setUserData(data.user);
-      } else {
-        toast.error(data.message);
-      }
-    } catch (error) {
-      toast.error(error.message);
-    }
-  };
-
-  const calculateRating = (course) => {
-    if (course.courseRatings.length === 0) {
-      return 0;
-    }
-    let totalRating = 0;
-    course.courseRatings.forEach((rating) => {
-      totalRating += rating.rating;
+  const currentWinningBid = (callback) => {
+    socket.once("winningBid", (data) => {
+      callback(data);
     });
-    return Math.floor(totalRating / course.courseRatings.length);
   };
 
-  const calculateChapterTime = (chapter) => {
-    let time = 0;
-    chapter.chapterContent.map((lecture) => (time += lecture.lectureDuration));
-    return humanizeDuration(time * 60 * 1000, { units: ["h", "m"] });
+  const bidHistory = () => {
+    socket.emit("bidHistory", { playerId, auctionId });
   };
 
-  const calculateCourseDuration = (course) => {
-    let time = 0;
-    course.courseContent.map((chapter) => {
-      chapter.chapterContent.map((lecture) => {
-        time += lecture.lectureDuration;
-      });
+  const findTotalUsersConnected = () => {
+    socket.on("userConnected", (data) => {
+      setUsersConnected(data.usersCount);
     });
-    return humanizeDuration(time * 60 * 1000, { units: ["h", "m"] });
-  };
-
-  const calculateNoOfLectures = (course) => {
-    let totalLectures = 0;
-
-    course.courseContent.forEach((chapter) => {
-      if (Array.isArray(chapter.chapterContent.length)) {
-        totalLectures += chapter.chapterContent.length;
-      }
-    });
-    return totalLectures;
-  };
-
-  //fetch user enrolled courses
-  const fetchUserEnrolledCourses = async () => {
-    const token = await getToken();
-    try {
-      const { data } = await axios.get(
-        backendUrl + "/api/user/enrolledCourses",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-     
-      if (data.success) {
-        setEnrolledCourses(data.enrolledCourse.reverse());
-      } else {
-        toast.error(data.message);
-      }
-    } catch (error) {
-      toast.error(error.message);
-    }
   };
 
   useEffect(() => {
-    fetchAllCourses();
-  }, []);
+    const handleUsersConnected = (data) => {
+      setUsersConnected(data.usersCount);
+    };
+
+    // socket.on("userConnected", handleUsersConnected);
+
+    // Clean up listener on unmount
+    return () => {
+      socket.off("userConnected", handleUsersConnected);
+    };
+  }, [socket]);
 
   useEffect(() => {
-    if (user) {
-      fetchUserData();
-      fetchUserEnrolledCourses();
-    }
-  }, [user]);
+    const handleBidHistory = (data) => setCurrentPlayerBidHistory(data);
 
+    socket.on("bidHistory", handleBidHistory);
+    // socket.on("userConnected", handleUsersConnected);
+
+    return () => {
+      socket.off("bidHistory", handleBidHistory);
+      // socket.off("userConnected", handleUsersConnected);
+      socket.disconnect();
+    };
+  }, [socket]);
   const value = {
-    currency,
-    allCourses,
+    placeBid,
+    currentWinningBid,
+    bidHistory,
+    currentPlayerBidHistory,
+    usersConnected,
+    findTotalUsersConnected,
     navigate,
-    calculateRating,
-    isEducator,
-    setIsEducator,
-    calculateChapterTime,
-    calculateCourseDuration,
-    calculateNoOfLectures,
-    enrolledCourses,
-    fetchUserEnrolledCourses,
-    backendUrl,
-    userData,
-    setUserData,
-    getToken,
-    fetchAllCourses,
-    // setEnrolledCourses
+    socket,
   };
   return (
     <AppContext.Provider value={value}>{props.children}</AppContext.Provider>

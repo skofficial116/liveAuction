@@ -1,34 +1,57 @@
+// server.js
 import express from "express";
-import cors from "cors";
-import "dotenv/config";
+import http from "http";
+import { Server } from "socket.io";
+import mongoose from "mongoose";
+import Team from "./models/Team.js"
+import Player from "./models/Player.js";
+// MongoDB connection
 import connectDB from "./configs/mongodb.js";
-import { clerkWebhooks, stripeWebhooks } from "./controllers/webhooks.js";
-import educatorRouter from "./routes/educatorRoutes.js";
-import { clerkMiddleware } from "@clerk/express";
-import connectCloudinary from "./configs/cloudinary.js";
-import courseRouter from "./routes/courseRouter.js";
-import userRouter from "./routes/userRoutes.js";
+connectDB();
+
+
+
 
 const app = express();
+app.use(express.json());
 
-// Connect MongoDB
-await connectDB();
+import auctionRouter from "./routes/auctionRouter.js";
+app.use("/auctionMeta", auctionRouter)
 
-await connectCloudinary();
-app.post("/stripe", express.raw({ type: "application/json" }), stripeWebhooks);
+app.use("/", (req,res)=>{
+  res.send("API is working")
+})
 
-app.use(cors());
-app.use(clerkMiddleware());
-// app.use(express.json()); // apply to all routes
+// Create HTTP server and attach Socket.IO
+const server = http.createServer(app);
+// const io = new Server(server, {
+//   cors: { origin: "*" }, // allow any frontend
+// });
 
-// Routes
-app.get("/", (req, res) => res.send("API Working"));
-app.post("/clerk", express.json(), clerkWebhooks);
-app.use("/api/educator", express.json(), educatorRouter);
-app.use("/api/course", express.json(), courseRouter);
-app.use("/api/user", express.json(), userRouter);
+// // Socket.IO real-time events
+// io.on("connection", (socket) => {
+//   console.log("User connected:", socket.id);
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log("Server is running successfully at PORT:" + PORT);
-});
+//   socket.on("joinAuctionRoom", (auctionId) => {
+//     socket.join(auctionId);
+//     console.log(`User ${socket.id} joined auction room: ${auctionId}`);
+//   });
+
+//   socket.on("placeBid", async (data) => {
+//     console.log("Bid placed:", data);
+
+//     // Optionally, save bid to DB using placeBid controller
+//     // await placeBid(data);
+
+//     // Broadcast to everyone in room
+//     io.to(data.auctionId).emit("bidUpdate", data);
+//   });
+
+//   socket.on("disconnect", () => {
+//     console.log("User disconnected:", socket.id);
+//   });
+// });
+
+// Start server
+const PORT = 4000;
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
