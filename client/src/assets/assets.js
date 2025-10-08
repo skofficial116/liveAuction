@@ -1,4 +1,6 @@
-import logo from "./logo.svg";
+// import logo from "./logo.svg";
+// import logo from "./logo.svg"
+import logo from "./logo.png"
 import logo_dark from "./logo_dark.svg";
 import search_icon from "./search_icon.svg";
 import cross_icon from "./cross_icon.svg";
@@ -179,33 +181,148 @@ export const bids = [
   { team: "Red Warriors", amount: 250 },
 ];
 
-export const teams = [
-  {
-    name: "Red Warriors",
-    budget: 1500,
-    logo: "https://via.placeholder.com/50",
-    players: [],
-  },
-  {
-    name: "Blue Titans",
-    budget: 1800,
-    logo: "https://via.placeholder.com/50",
-    players: [],
-  },
-  {
-    name: "Green Giants",
-    budget: 1600,
-    logo: "https://via.placeholder.com/50",
-    players: [],
-  },
-  {
-    name: "Yellow Kings",
-    budget: 1700,
-    logo: "https://via.placeholder.com/50",
-    players: [],
-  },
-];
-
+export const teams=[
+    {
+      "_id": "68e167ecabc39f77566bfbdf",
+      "name": "Delhi Dynamos",
+      "players": [
+        {
+          "sold": {
+            "price": 100,
+            "soldAt": "2025-10-04T18:31:09.685Z"
+          },
+          "_id": "68e167ecabc39f77566bfbf0",
+          "name": "Player 2",
+          "basePrice": 50,
+          "attributes": [
+            {
+              "name": "odRating",
+              "displayName": "ODI Rating",
+              "type": "number",
+              "defaultValue": 72
+            },
+            {
+              "name": "t20Rating",
+              "displayName": "T20 Rating",
+              "type": "number",
+              "defaultValue": 84
+            }
+          ],
+          "auctionSet": {
+            "name": "Set A"
+          }
+        }
+      ],
+      "maxPlayers": 25,
+      "minPlayers": 11,
+      "budget": 900
+    },
+    {
+      "_id": "68e167ecabc39f77566bfbe0",
+      "name": "Chennai Challengers",
+      "players": [
+        {
+          "sold": {
+            "price": 110,
+            "soldAt": "2025-10-04T18:31:10.123Z"
+          },
+          "_id": "68e167ecabc39f77566bfbf1",
+          "name": "Player 3",
+          "basePrice": 50,
+          "attributes": [
+            {
+              "name": "odRating",
+              "displayName": "ODI Rating",
+              "type": "number",
+              "defaultValue": 97
+            },
+            {
+              "name": "t20Rating",
+              "displayName": "T20 Rating",
+              "type": "number",
+              "defaultValue": 98
+            }
+          ],
+          "auctionSet": {
+            "name": "Set A"
+          }
+        }
+      ],
+      "maxPlayers": 25,
+      "minPlayers": 11,
+      "budget": 890
+    },
+    {
+      "_id": "68e167ecabc39f77566bfbe1",
+      "name": "Kolkata Kings",
+      "players": [
+        {
+          "sold": {
+            "price": 100,
+            "soldAt": "2025-10-04T18:31:10.498Z"
+          },
+          "_id": "68e167ecabc39f77566bfbf2",
+          "name": "Player 4",
+          "basePrice": 50,
+          "attributes": [
+            {
+              "name": "odRating",
+              "displayName": "ODI Rating",
+              "type": "number",
+              "defaultValue": 68
+            },
+            {
+              "name": "t20Rating",
+              "displayName": "T20 Rating",
+              "type": "number",
+              "defaultValue": 90
+            }
+          ],
+          "auctionSet": {
+            "name": "Set A"
+          }
+        }
+      ],
+      "maxPlayers": 25,
+      "minPlayers": 11,
+      "budget": 900
+    },
+    {
+      "_id": "68e167ecabc39f77566bfbde",
+      "name": "Mumbai Masters",
+      "players": [
+        {
+          "sold": {
+            "price": 100,
+            "soldAt": "2025-10-04T18:31:09.298Z"
+          },
+          "_id": "68e167ecabc39f77566bfbef",
+          "name": "Player 1",
+          "basePrice": 50,
+          "attributes": [
+            {
+              "name": "odRating",
+              "displayName": "ODI Rating",
+              "type": "number",
+              "defaultValue": 65
+            },
+            {
+              "name": "t20Rating",
+              "displayName": "T20 Rating",
+              "type": "number",
+              "defaultValue": 65
+            }
+          ],
+          "auctionSet": {
+            "name": "Set A"
+          }
+        }
+      ],
+      "maxPlayers": 25,
+      "minPlayers": 11,
+      "budget": 900
+    }
+  ]
 export const dummyPlayers = [
   {
     id: 1,

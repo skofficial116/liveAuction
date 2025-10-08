@@ -94,6 +94,8 @@ export const getAllTeams = async (req, res) => {
       createdAt: false,
       updatedAt: false,
       __v: false,
+      short: true,
+      color: true,
     };
     const playerFields = {
       name: true,
@@ -162,12 +164,32 @@ export const getAllTeams = async (req, res) => {
 
 export const getAllPlayers = async (req, res) => {
   try {
-    let auctionId = req.auctionId || "68e167ecabc39f77566bfbe4";
-    let players = await Player.find({ auction: auctionId })
-      .select("-currentBid -sport -_id")
-      .populate();
-    res.json({ success: true, players });
-    // res.json({ success: true });
+    const auctionId = req.auctionId || "68e167ecabc39f77566bfbe4";
+
+    const players = await Player.find({ auction: auctionId })
+      .select("-currentBid -sport -_id -auction")
+      .populate({
+        path: "auctionSet",
+        select: "-_id name",
+      })
+      .populate({
+        path: "sold.team",
+        select: "name -_id",
+      })
+      .lean(); // converts Mongoose docs to plain JS objects (lets us edit safely)
+
+    // Ensure sold structure is always consistent
+    const normalizedPlayers = players.map((player) => {
+      if (!player.sold) {
+        player.sold = { isSold: false };
+      } else if (!player.sold.isSold) {
+        player.sold = { isSold: false }; // remove any leftover empty team or price fields
+      }
+      return player;
+    });
+
+    console.log(auctionId, ": AuctionId");
+    res.json({ success: true, players: normalizedPlayers });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
@@ -222,5 +244,4 @@ export const getMyTeam = async (req, res) => {
   }
 };
 
-
-// export const 
+// export const

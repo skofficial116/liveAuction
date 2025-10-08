@@ -13,6 +13,7 @@ const teamSchema = new mongoose.Schema(
       ref: "Auction",
       default: null,
     },
+    short:{type:String},
     captain: {
       name: String,
       id: {
@@ -50,6 +51,8 @@ const teamSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+     toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
 

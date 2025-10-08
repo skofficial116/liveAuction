@@ -1,57 +1,42 @@
-// server.js
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 import mongoose from "mongoose";
-import Team from "./models/Team.js"
+import cors from "cors"; // 👈 ADD THIS LINE
+import Team from "./models/Team.js";
 import Player from "./models/Player.js";
-// MongoDB connection
 import connectDB from "./configs/mongodb.js";
+import socketHandler from "./sockets/index.js";
 connectDB();
 
-
-
-
 const app = express();
+
+// ✅ Enable CORS for your frontend (Vite default port 5173)
+app.use(
+  cors({
+    origin: "http://localhost:5173", // Allow your frontend
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    credentials: true, // optional, if you need cookies/auth headers
+  })
+);
+
 app.use(express.json());
 
 import auctionRouter from "./routes/auctionRouter.js";
-app.use("/auctionMeta", auctionRouter)
+app.use("/auctionMeta", auctionRouter);
 
-app.use("/", (req,res)=>{
-  res.send("API is working")
-})
+app.use("/", (req, res) => {
+  res.send("API is working");
+});
 
-// Create HTTP server and attach Socket.IO
 const server = http.createServer(app);
-// const io = new Server(server, {
-//   cors: { origin: "*" }, // allow any frontend
-// });
+const io = new Server(server, {
+  cors: { origin: "http://localhost:5173", methods: ["GET", "POST"] },
+});
 
-// // Socket.IO real-time events
-// io.on("connection", (socket) => {
-//   console.log("User connected:", socket.id);
+socketHandler(io);
 
-//   socket.on("joinAuctionRoom", (auctionId) => {
-//     socket.join(auctionId);
-//     console.log(`User ${socket.id} joined auction room: ${auctionId}`);
-//   });
-
-//   socket.on("placeBid", async (data) => {
-//     console.log("Bid placed:", data);
-
-//     // Optionally, save bid to DB using placeBid controller
-//     // await placeBid(data);
-
-//     // Broadcast to everyone in room
-//     io.to(data.auctionId).emit("bidUpdate", data);
-//   });
-
-//   socket.on("disconnect", () => {
-//     console.log("User disconnected:", socket.id);
-//   });
-// });
 
 // Start server
 const PORT = 4000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
