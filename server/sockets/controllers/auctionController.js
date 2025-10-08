@@ -2,6 +2,7 @@
 import Bid from "../../models/Bid.js";
 import Player from "../../models/Player.js";
 import Team from "../../models/Team.js";
+import mongoose from "mongoose";
 
 /**
  * 1️⃣ CURRENT BID — fetch latest bid for a player
@@ -20,14 +21,30 @@ export const getCurrentBid = async (io, socket, data, callback) => {
   try {
     const { playerId } = data;
 
-    const player = await Player.findById(playerId)
-      .populate("currentBid.team", "name") // populate team name
-      .populate("auctionSet", "name"); // optional if you need auction set name
+    // 1️⃣ Fetch player details
+    const player = await Player.findById(playerId).populate(
+      "auctionSet",
+      "name"
+    );
+
+    const totalBids = await Bid.find({player:playerId})
 
     if (!player) throw new Error("Player not found");
-startPlayerAuctionTimer(playerId);
 
+    // 2️⃣ Fetch latest winning bid from Bid model
+    const winningBid = await Bid.findOne({
+      player: playerId,
+      status: "winning",
+    })
+      .populate("team", "name short color") // populate team info
+      .sort({ amount: -1 });
+
+    // 3️⃣ Start auction timer
+    startPlayerAuctionTimer(playerId);
     const timerEnd = auctionTimers.get(playerId);
+
+
+    // 4️⃣ Prepare response
     const currentBidData = {
       name: player.name,
       country:
@@ -38,15 +55,17 @@ startPlayerAuctionTimer(playerId);
       t20Rating:
         player.attributes.find((a) => a.name === "T20Rating")?.defaultValue ||
         0,
-      currentBid: player.currentBid?.amount || player.basePrice,
-      leadingTeam: player.currentBid?.team?.name || null,
+      currentBid: winningBid?.amount || player.basePrice,
+      leadingTeam: winningBid?.team?.name || null,
       auctionSet: player.auctionSet?.name || null,
       basePrice: player.basePrice,
       specialty:
         player.attributes.find((a) => a.name === "specialty")?.defaultValue ||
-        "-", timerEnd
+        "-",
+      timerEnd,
+      
+      color: winningBid?.team?.color || "#ccc",
     };
-
     if (callback) callback({ success: true, currentBid: currentBidData });
   } catch (err) {
     console.error("getCurrentBid error:", err);
@@ -62,16 +81,19 @@ export const getBidHistory = async (io, socket, data, callback) => {
     const { playerId } = data;
 
     const bids = await Bid.find({ player: playerId })
-      .populate("team", "name")
-      .sort({ createdAt: -1 });
-
+      .populate("team", "name color short")
+      .sort({ amount: -1 });
     const bidHistory = bids.map((b, idx) => ({
       id: idx + 1,
       amount: b.amount,
-      team: b.team?.name || "-",
-      timestamp: b.timestamp.getTime(), // JS timestamp in ms
+      team: {
+        teamName: b.team?.name || "-",
+        color: b.team.color,
+        short: b.team.short,
+      },
+      timestamp: b.timestamp.getTime(),
+      // JS timestamp in ms
     }));
-
     if (callback) callback({ success: true, bids: bidHistory });
   } catch (err) {
     console.error("getBidHistory error:", err);
@@ -82,37 +104,33 @@ export const getBidHistory = async (io, socket, data, callback) => {
 /**
  * 3️⃣ TOP 3 BIDS — fetch top 3 highest bids for a player
  */
-export const getTop3Bids = async (io, socket, data, callback) => {
+
+export const getTop3Bids = async (socket, data) => {
   try {
-    const { auctionId } = data;
+    // const { auctionId } = data;
+    const auctionId = "68e167ecabc39f77566bfbe4"
 
-    // Find sold players in the auction
-    const soldPlayers = await Player.find({
-      auction: auctionId,
-      "sold.isSold": true,
-    }).populate("sold.team", "name");
+    if (!mongoose.Types.ObjectId.isValid(auctionId)) {
+      return socket.emit("topBidsUpdated", {
+        success: false,
+        message: "Invalid auctionId",
+      });
+    }
 
-    // Get the highest bid for each sold player
-    const topBidsFormatted = soldPlayers
-      .map((player) => ({
-        playerName: player.name,
-        amount: player.sold.price,
-        team: player.sold.team?.name || "-",
-        country:
-          player.attributes.find((a) => a.name === "country")?.defaultValue ||
-          "-",
-        specialty:
-          player.attributes.find((a) => a.name === "specialty")?.defaultValue ||
-          "-",
-      }))
-      .sort((a, b) => b.amount - a.amount) // descending by amount
-      .slice(0, 6) // top 6 sold players
+    // Step 1: Get all players in this auction
+    const players = await Player.find({ auction: auctionId });
 
-      .map((b, idx) => ({ id: idx + 1, ...b })); // add id field
+    const bidsWithWinning = await Bid.find({status:"won"}).populate({
+        path:"player", select:"-_id name sold.soldAt"
+      
+    }).populate({
+        path:"team", select:"-_id name short color"
+    }).sort({amount:-1}).limit(3).lean({virtuals:false}).select("-createdAt -updatedAt -__v -isWinning -status -timestamp")
 
-    if (callback) callback({ success: true, topBids: topBidsFormatted });
+
+    socket.emit("topBidsUpdated", { success: true, topBids:bidsWithWinning });
   } catch (err) {
     console.error("getTop3Bids error:", err);
-    if (callback) callback({ success: false, message: err.message });
+    socket.emit("topBidsUpdated", { success: false, message: err.message });
   }
 };

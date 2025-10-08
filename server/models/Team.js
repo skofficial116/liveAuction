@@ -13,7 +13,9 @@ const teamSchema = new mongoose.Schema(
       ref: "Auction",
       default: null,
     },
-    short:{type:String},
+    short: { type: String },
+    slogan: { type: String },
+    color: { type: String },
     captain: {
       name: String,
       id: {
@@ -51,55 +53,64 @@ const teamSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-     toJSON: { virtuals: true },
+    toJSON: { virtuals: true },
     toObject: { virtuals: true },
   }
 );
 
 // Indexes
 teamSchema.index({ name: 1 }, { unique: true });
-teamSchema.index({ budget: -1 }); //const richTeams = await Team.find().sort({ budget: -1 });
+teamSchema.index({ budget: -1 });
 
+// ---------------------
 // VIRTUALS
+// ---------------------
+
+// Current number of players (safe even if not populated)
+teamSchema.virtual("playerCount").get(function () {
+  return Array.isArray(this.players) ? this.players.length : 0;
+});
+
+// Max bid the team can place safely
 teamSchema.virtual("maxBid").get(function () {
   const minPlayers = this.minPlayers || 0;
   const maxPlayers = this.maxPlayers || 11;
+  const currentCount = Array.isArray(this.players) ? this.players.length : 0;
 
-  const currentCount = this.players.length;
-
-  // If team reached max players, no bid possible
   if (currentCount >= maxPlayers) return 0;
 
-  // Players remaining to reach min quota
   const remainingQuota = Math.max(minPlayers - currentCount - 1, 0);
-
-  // Calculate max bid
-  // Ensure at least base price is left for remaining quota
-  // For now, assume the next player base price is 0 if not known; can be passed dynamically when needed
-
   const maxBid = this.budget - remainingQuota * this.basePriceForPlayers;
 
   return maxBid > 0 ? maxBid : 0;
 });
 
+// Total spent budget
 teamSchema.virtual("spentBudget").get(function () {
-  if (!this.players || this.players.length === 0) return 0;
-  return this.players.reduce((total, player) => {
-    return total + (player.sold?.price || 0);
-  }, 0);
-});
-// await team.populate("players");
-// console.log(`Spent: $${team.spentBudget}`);
+  if (!Array.isArray(this.players) || this.players.length === 0) return 0;
 
+  // If players are populated
+  if (typeof this.players[0] === "object" && this.players[0]?.sold) {
+    return this.players.reduce((total, player) => {
+      return total + (player.sold?.price || 0);
+    }, 0);
+  }
+
+  // If players are ObjectIds, we cannot calculate spent budget
+  return 0;
+});
+
+// Check if team is full
 teamSchema.virtual("isFull").get(function () {
-  const MAX_PLAYERS = 11;
-  return this.playerCount >= MAX_PLAYERS;
+  return (Array.isArray(this.players) ? this.players.length : 0) >= this.maxPlayers;
 });
-// if (team.isFull) console.log("Team is full, cannot buy more players");
 
+// ---------------------
 // METHODS
+// ---------------------
+
 teamSchema.methods.buyPlayer = async function (player, bidAmount) {
-  const currentCount = this.players.length;
+  const currentCount = Array.isArray(this.players) ? this.players.length : 0;
 
   if (currentCount >= this.maxPlayers) {
     throw new Error(
@@ -120,8 +131,5 @@ teamSchema.methods.buyPlayer = async function (player, bidAmount) {
 
   return this;
 };
-
-// await team.buyPlayer(player, 500);
-// console.log(team.remainingBudget);
 
 export default mongoose.model("Team", teamSchema);
