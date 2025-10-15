@@ -23,4 +23,5 @@ export default function auctionSocket(io, socket) {
   socket.on("getTop3Bids", async (data, callback) =>
     getTop3Bids(io, socket, data, callback)
   );
+  
 }

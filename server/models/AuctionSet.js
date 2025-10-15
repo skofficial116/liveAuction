@@ -7,11 +7,6 @@ const auctionSetSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    sport: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Sport",
-      required: true,
-    },
     auction: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Auction",
@@ -23,19 +18,15 @@ const auctionSetSchema = new mongoose.Schema(
         ref: "Player",
       },
     ],
-    currentPlayer: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Player",
-    },
     status: {
       type: String,
-      enum: ["upcoming", "in_progress", "completed"],
-      default: "upcoming",
+      enum: ["scheduled","draft", "in_progress", "completed"],
+      default: "draft",
     },
-    order: {
-      type: Number,
-      default: 0,
-    },
+    // order: {
+    //   type: Number,
+    //   default: 0,
+    // },
     startTime: Date,
     endTime: Date,
   },

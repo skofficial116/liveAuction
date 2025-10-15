@@ -35,7 +35,12 @@ const auctionSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    description: String,
+    shortDescription: String,
+    longDescription: String,
+    startTime: {
+      type: Date,
+      required: true,
+    },
     startTime: {
       type: Date,
       required: true,
@@ -43,13 +48,13 @@ const auctionSchema = new mongoose.Schema(
     endTime: { type: Date, default: null },
     status: {
       type: String,
-      enum: ["scheduled", "in_progress", "paused", "completed"],
-      default: "scheduled",
+      enum: ["scheduled", "in_progress", "paused", "completed", 'draft'],
+      default: "draft",
     },
     sport: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Sport",
-      required: true,
+      // required: true,
     },
     sets: [
       {
@@ -57,16 +62,13 @@ const auctionSchema = new mongoose.Schema(
         ref: "AuctionSet",
       },
     ],
-    currentSet: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "AuctionSet",
-    },
     teams: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Team",
       },
     ],
+    attributes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Attribute" }],
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

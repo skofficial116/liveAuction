@@ -5,7 +5,6 @@ const teamSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
     },
     auction: {
@@ -59,7 +58,7 @@ const teamSchema = new mongoose.Schema(
 );
 
 // Indexes
-teamSchema.index({ name: 1 }, { unique: true });
+teamSchema.index({ name: 1 });
 teamSchema.index({ budget: -1 });
 
 // ---------------------

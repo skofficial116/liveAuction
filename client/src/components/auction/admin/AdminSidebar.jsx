@@ -13,7 +13,7 @@ function Sidebar() {
   const menuItems = [
     {
       name: "Current Bid",
-      path: "/admin/currentBid",
+      path: "/auction/admin/currentBid",
       icon: (
         <>
           <Gavel size={22} strokeWidth={1.5} />
@@ -22,7 +22,7 @@ function Sidebar() {
     },
     {
       name: "Auction History",
-      path: "/admin/auctionHistory",
+      path: "/auction/admin/auctionHistory",
       icon: (
         <>
           <ScrollText size={22} strokeWidth={1.5} />
@@ -31,7 +31,7 @@ function Sidebar() {
     },
     {
       name: "All Teams",
-      path: "/admin/allTeams",
+      path: "/auction/admin/allTeams",
       icon: (
         <>
           <Shield size={22} strokeWidth={1.5} />
@@ -40,7 +40,7 @@ function Sidebar() {
     },
     {
       name: "Manage Sets",
-      path: "/admin/manageSets",
+      path: "/auction/admin/manageSets",
       icon: (
         <>
           <LayoutGrid size={22} strokeWidth={1.5} />
@@ -49,7 +49,7 @@ function Sidebar() {
     },
     {
       name: "Manage Players",
-      path: "/admin/managePlayers",
+      path: "/auction/admin/managePlayers",
       icon: (
         <>
           <UserCog size={22} strokeWidth={1.5} />
@@ -58,7 +58,7 @@ function Sidebar() {
     },
     {
       name: "Settings",
-      path: "/admin/settings",
+      path: "/auction/admin/settings",
       icon: (
         <>
           <Cog size={22} strokeWidth={1.5} />

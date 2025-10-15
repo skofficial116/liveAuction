@@ -6,7 +6,7 @@ function Sidebar() {
   const menuItems = [
     {
       name: "Current Bid",
-      path: "/captain/currentBid",
+      path: "/auction/captain/currentBid",
       icon: (
         <>
           <Gavel size={22} strokeWidth={1.5} />
@@ -15,7 +15,7 @@ function Sidebar() {
     },
     {
       name: "Auction History",
-      path: "/captain/auctionHistory",
+      path: "/auction/captain/auctionHistory",
       icon: (
         <>
           <ScrollText size={22} strokeWidth={1.5} />
@@ -24,7 +24,7 @@ function Sidebar() {
     },
     {
       name: "All Teams",
-      path: "/captain/allTeams",
+      path: "/auction/captain/allTeams",
       icon: (
         <>
           <Shield size={22} strokeWidth={1.5} />
@@ -33,7 +33,7 @@ function Sidebar() {
     },
     {
       name: "My Team",
-      path: "/captain/myTeam",
+      path: "/auction/captain/myTeam",
       icon: (
         <>
           <User size={22} strokeWidth={1.5} />

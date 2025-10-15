@@ -1,85 +1,34 @@
-import mongoose from "mongoose";
+import mongoose, { mongo } from "mongoose";
 
-const playerAttributeSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    displayName: {
-      type: String,
-      required: true,
-    },
-    type: {
-      type: String,
-      enum: ["number", "string", "select"],
-      default: "number",
-    },
-    options: [
-      {
-        value: mongoose.Schema.Types.Mixed,
-        label: String,
-      },
-    ],
-    min: Number,
-    max: Number,
-    required: {
-      type: Boolean,
-      default: false,
-    },
-    defaultValue: mongoose.Schema.Types.Mixed,
-    order: {
-      type: Number,
-      default: 0,
-    },
-  },
-  { _id: false }
-);
+const playerAttributeSchema = new mongoose.Schema({
+  attributeId: { type: mongoose.Schema.Types.ObjectId, ref: "Attribute", required: true }, // reference to original Attribute
+  name: { type: String, required: true },
+  description: { type: String },
+  typeOf: { type: String, enum: ["string", "int", "select"], default: "string" },
+  options: [{ type: String, default: null }],
+  defaultValue: mongoose.Schema.Types.Mixed, // original default
+  value: mongoose.Schema.Types.Mixed, // player-specific value
+});
 
-const playerSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    sport: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Sport",
-      required: true,
-    },
-    auction: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Auction",
-      required: true,
-    },
-    basePrice: {
-      type: Number,
-      required: true,
-      min: 10,
-    },
-    currentBid: {
-      amount: { type: Number, default: 0 },
-      team: { type: mongoose.Schema.Types.ObjectId, ref: "Team" },
-      timestamp: Date,
-    },
-    sold: {
-      isSold: { type: Boolean, default: false },
-      price: Number,
-      team: { type: mongoose.Schema.Types.ObjectId, ref: "Team" },
-      soldAt: Date,
-    },
-    attributes: [playerAttributeSchema],
-    auctionSet: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "AuctionSet",
-    },
+
+const playerSchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true },
+  sport: { type: mongoose.Schema.Types.ObjectId, ref: "Sport", required: true },
+  auction: { type: mongoose.Schema.Types.ObjectId, ref: "Auction", required: true },
+  basePrice: { type: Number, required: true, min: 10 },
+
+  attributes: [playerAttributeSchema], 
+
+  sold: {
+    isSold: { type: Boolean, default: false },
+    price: {type:Number, default:null},
+    team: { type: mongoose.Schema.Types.ObjectId, ref: "Team", default:null },
+    soldAt: {type:Date, default:null},
   },
-  {
-    timestamps: true,
-  }
-);
+
+  auctionSet: { type: mongoose.Schema.Types.ObjectId, ref: "AuctionSet" },
+}, { timestamps: true });
+
 
 // Indexes
 playerSchema.index({ name: 1, sport: 1 }, { unique: true });

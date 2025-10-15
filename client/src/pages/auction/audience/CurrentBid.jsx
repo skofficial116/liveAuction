@@ -408,7 +408,7 @@ const CurrentBid = () => {
     const newSocket = io("http://localhost:4000");
     setSocket(newSocket);
 
-    const playerId = "68e167ecabc39f77566bfbf3";
+    const playerId = "68e7d370af6b023b9c3f1cd0";
     newSocket.emit("joinPlayerRoom", { playerId });
 
     newSocket.on("currentBidUpdated", (data) => {

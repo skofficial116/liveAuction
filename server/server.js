@@ -8,6 +8,7 @@ import Player from "./models/Player.js";
 import connectDB from "./configs/mongodb.js";
 import socketHandler from "./sockets/index.js";
 connectDB();
+import cookieParser from "cookie-parser";
 
 const app = express();
 
@@ -21,6 +22,8 @@ app.use(
 );
 
 app.use(express.json());
+app.use(cookieParser());
+
 
 import auctionRouter from "./routes/auctionRouter.js";
 app.use("/auctionMeta", auctionRouter);
@@ -29,9 +32,11 @@ app.use("/", (req, res) => {
   res.send("API is working");
 });
 
+
+
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: "http://localhost:5173", methods: ["GET", "POST"] },
+  cors: { origin: "http://localhost:5173", methods: ["GET", "POST"], credentials:true },
 });
 
 socketHandler(io);

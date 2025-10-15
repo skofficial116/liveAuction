@@ -1,33 +1,51 @@
 import React from "react";
+import { Users } from "lucide-react"; // Lucide icon for teams
 
-const TourneyCard = () => {
-  const data = {
-    header: "Coming Soon",
-    title: "SPL Season-6 Auction",
-    text: "Get ready for the most exciting auction of the season! Stay tuned for more details.",
-    buttonText: "Join the Auction",
-    buttonLink: "auction", 
-  };
-  const { header, title, text, buttonText, buttonLink = "#" } = data;
+const TourneyCard = ({ data }) => {
+  if (!data) {
+    return (
+      <div className="w-full flex justify-center items-center py-10">
+        <p className="text-red-500 text-lg">Failed to load auction data.</p>
+      </div>
+    );
+  }
+
+  const { name, description, startTime, teams } = data;
+  const teamCount = teams?.length || 0;
 
   return (
-    <div className="max-w-3xl mx-auto my-8">
-      <div className="border border-[#5D0E41] rounded-lg bg-[#00224D] text-white shadow-lg">
-        <div className="px-6 py-3 border-b border-[#A0153E]">
-          <h5 className="font-medium text-[#FF204E]">{header}</h5>
+    <section className="w-full flex justify-center px-4 py-4">
+      <div className="w-full max-w-3xl bg-white border border-gray-200 rounded-2xl shadow-xl hover:shadow-2xl transition-shadow duration-300 overflow-hidden">
+        <div className="bg-gradient-to-r from-[#FF204E] to-[#A0153E] px-6 py-4 flex justify-between items-center">
+          <h5 className="font-semibold text-white tracking-wide uppercase">
+            Upcoming Auction
+          </h5>
+          <span className="flex items-center text-white font-medium">
+            <Users className="w-5 h-5 mr-1" /> {teamCount} Teams
+          </span>
         </div>
-        <div className="p-6">
-          <h5 className="text-2xl font-bold mb-2 text-[#FF204E]">{title}</h5>
-          <p className="mb-4 text-[#A0153E]">{text}</p>
+
+        <div className="p-6 md:p-8 text-left md:text-center">
+          <h2 className="text-2xl md:text-3xl font-bold mb-3 text-[#00224D]">
+            {name}
+          </h2>
+          <p className="mb-4 text-gray-600 text-base md:text-lg">{description}</p>
+          <p className="mb-6 text-gray-500 text-sm md:text-base">
+            Starts at:{" "}
+            {new Date(startTime).toLocaleString(undefined, {
+              dateStyle: "medium",
+              timeStyle: "short",
+            })}
+          </p>
           <a
-            href={buttonLink}
-            className="inline-block bg-[#FF204E] text-white font-semibold py-2 px-4 rounded hover:bg-[#A0153E] transition-colors duration-200"
+            href={`/auction/${data._id}`}
+            className="inline-block bg-gradient-to-r from-[#FF204E] to-[#A0153E] text-white font-semibold py-3 px-8 rounded-full hover:opacity-90 transition-opacity duration-200 text-lg"
           >
-            {buttonText}
+            Join the Auction
           </a>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 

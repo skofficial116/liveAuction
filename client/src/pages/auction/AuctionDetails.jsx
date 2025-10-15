@@ -1,160 +1,113 @@
-import React, { useState, useEffect } from "react";
-import { Clock, Users, Trophy, DollarSign, Play, Eye } from "lucide-react";
+import React, { useEffect, useState, useContext } from "react";
+import { useParams } from "react-router-dom";
+import axios from "axios";
+import { Clock, Play, Eye, DollarSign, Info } from "lucide-react";
+import { toast } from "react-toastify";
+import { AppContext } from "../../context/AppContext";
 
-// Dummy Teams / Assets
-const dummyTeams = [
-  { name: "Red Warriors", logo: "🔴" },
-  { name: "Blue Titans", logo: "🔵" },
-  { name: "Green Gladiators", logo: "🟢" },
-  { name: "Yellow Lightning", logo: "🟡" },
-];
-
-// Dummy credentials
-const dummyCredentials = {
-  admin: "admin123",
-  captains: {
-    "Red Warriors": "red123",
-    "Blue Titans": "blue123",
-    "Green Gladiators": "green123",
-    "Yellow Lightning": "yellow123",
-  },
-};
-
-// Auction Entry Modal
-const AuctionEntryModal = ({ onSubmit, onClose }) => {
+// ===================== Auction Entry Modal =====================
+export const AuctionEntryModal = ({ auctionData, onClose }) => {
+  const { getCookie, setCookie } = useContext(AppContext);
   const [role, setRole] = useState("");
-  const [username, setUsername] = useState("");
-  const [team, setTeam] = useState("");
+  const [userName, setUserName] = useState("");
+  const [teamId, setTeamId] = useState(""); // captain only
   const [secretKey, setSecretKey] = useState("");
   const [error, setError] = useState("");
+  const [joinedAuction, setJoinedAuction] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setJoinedAuction(!!getCookie("auctionId"));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [getCookie]);
+
+  const handleError = (msg) =>
+    toast.error(msg, { position: "top-right", autoClose: 3000, closeOnClick: true });
 
   const handleSubmit = () => {
     setError("");
+    if (joinedAuction) return handleError("Already joined an auction.");
     if (!role) return setError("Please select a role");
+    if (!userName) return setError("Please enter your name");
 
     if (role === "audience") {
-      if (!username) return setError("Please enter your username");
-      localStorage.setItem(
-        "auctionUser",
-        JSON.stringify({
-          role,
-          username,
-          expiry: new Date().getTime() + 24 * 60 * 60 * 1000,
-        })
-      );
-      onSubmit({ role, username });
+      setCookie("auctionUser", { role, userName, teamId: null });
+      setCookie("auctionId", auctionData._id);
       onClose();
-      window.location.href = "/audience";
+      window.location.href = `/auction/${role}`;
     } else if (role === "admin") {
-      if (secretKey === dummyCredentials.admin) {
-        localStorage.setItem(
-          "auctionUser",
-          JSON.stringify({
-            role,
-            username: "Admin",
-            expiry: new Date().getTime() + 24 * 60 * 60 * 1000,
-          })
-        );
-        onSubmit({ role, username: "Admin" });
+      if (auctionData?.credentials?.admin?.secret === secretKey) {
+        setCookie("auctionUser", { role, userName, teamId: null });
+        setCookie("auctionId", auctionData._id);
         onClose();
-        window.location.href = "/admin";
-      } else setError("Invalid Admin Key");
+        window.location.href = `/auction/${role}`;
+      } else setError("Invalid Admin Secret Key");
     } else if (role === "captain") {
-      if (!team) return setError("Please select a team");
-      if (secretKey === dummyCredentials.captains[team]) {
-        localStorage.setItem(
-          "auctionUser",
-          JSON.stringify({
-            role,
-            team,
-            username: team + " Captain",
-            expiry: new Date().getTime() + 24 * 60 * 60 * 1000,
-          })
-        );
-        onSubmit({ role, team, username: team + " Captain" });
+      if (!teamId) return setError("Please select a team");
+      const teamCred = auctionData?.credentials?.teams?.find((t) => t.teamId === teamId);
+      if (teamCred && secretKey === teamCred.secret) {
+        setCookie("auctionUser", { role, userName, teamId: teamCred.teamId });
+        setCookie("auctionId", auctionData._id);
         onClose();
-        window.location.href = "/captain";
-      } else setError("Invalid Captain Key");
+        window.location.href = `/auction/${role}`;
+      } else setError("Invalid Captain Secret Key");
     }
   };
 
+  if (!auctionData) return null;
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
-      <div className="bg-white rounded-xl p-8 w-96 space-y-4">
+    <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 backdrop-blur-sm">
+      <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 border border-gray-700 rounded-3xl shadow-xl p-8 w-96 space-y-5 text-white">
         <h2 className="text-2xl font-bold text-center">Enter Auction</h2>
         <div className="space-y-3">
-          <div>
-            <label className="block mb-1 font-medium">Select Role</label>
+          <input
+            type="text"
+            value={userName}
+            onChange={(e) => setUserName(e.target.value)}
+            placeholder="Name"
+            className="w-full px-3 py-2 rounded-lg bg-gray-800 text-white border border-gray-700"
+          />
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg bg-gray-800 text-white border border-gray-700"
+          >
+            <option value="">-- Select Role --</option>
+            <option value="audience">Audience</option>
+            <option value="captain">Captain</option>
+            <option value="admin">Admin</option>
+          </select>
+
+          {role === "captain" && auctionData?.teams?.length > 0 && (
             <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="w-full border rounded px-3 py-2"
+              value={teamId}
+              onChange={(e) => setTeamId(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg bg-gray-800 text-white border border-gray-700"
             >
-              <option value="">-- Select Role --</option>
-              <option value="audience">Audience</option>
-              <option value="captain">Captain</option>
-              <option value="admin">Admin</option>
+              <option value="">-- Select Team --</option>
+              {auctionData.teams.map((team) => (
+                <option key={team._id} value={team._id}>{team.name}</option>
+              ))}
             </select>
-          </div>
-
-          {role === "audience" && (
-            <div>
-              <label className="block mb-1 font-medium">Username</label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full border rounded px-3 py-2"
-              />
-            </div>
           )}
 
-          {role === "captain" && (
-            <>
-              <div>
-                <label className="block mb-1 font-medium">Select Team</label>
-                <select
-                  value={team}
-                  onChange={(e) => setTeam(e.target.value)}
-                  className="w-full border rounded px-3 py-2"
-                >
-                  <option value="">-- Select Team --</option>
-                  {dummyTeams.map((t) => (
-                    <option key={t.name} value={t.name}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block mb-1 font-medium">Secret Key</label>
-                <input
-                  type="password"
-                  value={secretKey}
-                  onChange={(e) => setSecretKey(e.target.value)}
-                  className="w-full border rounded px-3 py-2"
-                />
-              </div>
-            </>
+          {(role === "captain" || role === "admin") && (
+            <input
+              type="password"
+              value={secretKey}
+              onChange={(e) => setSecretKey(e.target.value)}
+              placeholder="Secret Key"
+              className="w-full px-3 py-2 rounded-lg bg-gray-800 text-white border border-gray-700"
+            />
           )}
 
-          {role === "admin" && (
-            <div>
-              <label className="block mb-1 font-medium">Secret Key</label>
-              <input
-                type="password"
-                value={secretKey}
-                onChange={(e) => setSecretKey(e.target.value)}
-                className="w-full border rounded px-3 py-2"
-              />
-            </div>
-          )}
-
-          {error && <div className="text-red-500 font-medium">{error}</div>}
+          {error && <div className="text-red-400">{error}</div>}
 
           <button
             onClick={handleSubmit}
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2 rounded-lg"
           >
             Enter Auction
           </button>
@@ -164,225 +117,131 @@ const AuctionEntryModal = ({ onSubmit, onClose }) => {
   );
 };
 
-// Main AuctionDetails Component
+// ===================== Auction Page =====================
 const AuctionPage = () => {
-  const sampleAuction = {
-    name: "Premier Sports League Auction",
-    description:
-      "Get ready for the most thrilling live sports auction. Bid on your favorite players and manage your dream team in real-time!",
-    startTime: new Date(new Date().getTime() + 5000), // starts in 5s
-    endTime: new Date(new Date().getTime() + 7200 * 1000), // ends in 2h
-    totalPlayers: 8,
-    totalTeams: 4,
-    teams: dummyTeams.map((team, i) => ({
-      ...team,
-      role: "Captain",
-      budget: 500000,
-      captain: ["John", "Jane", "Mike", "Sarah"][i] + " Doe",
-    })),
-  };
-
+  const { getCookie } = useContext(AppContext);
+  const { auctionId } = useParams();
+  const [auctionData, setAuctionData] = useState(null);
+  const [auctionStatus, setAuctionStatus] = useState("loading");
+  const [timeLeft, setTimeLeft] = useState({});
   const [showModal, setShowModal] = useState(false);
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-  });
-  const [auctionStatus, setAuctionStatus] = useState("not_started");
+  const [error, setError] = useState(null);
 
-  // Countdown Timer
+  // Fetch auction data
   useEffect(() => {
+    axios.get(`http://localhost:4000/auctionMeta/auction/${auctionId}`)
+      .then(res => res.data.success ? setAuctionData(res.data.auctionData) : setError("Invalid data"))
+      .catch(() => setError("Unable to fetch auction details"));
+  }, [auctionId]);
+
+  // Timer logic
+  useEffect(() => {
+    if (!auctionData) return;
+    let start = new Date(auctionData.startTime).getTime();
+    const now = Date.now();
+    if (isNaN(start) || start < now) start = now + 10000;
+    const end = start + 2 * 60 * 60 * 1000;
+
     const timer = setInterval(() => {
-      const now = new Date().getTime();
-      const startTime = sampleAuction.startTime.getTime();
-      const endTime = sampleAuction.endTime.getTime();
-
-      if (now < startTime) {
-        const distance = startTime - now;
+      const current = Date.now();
+      if (current < start) {
         setAuctionStatus("not_started");
-        setTimeLeft({
-          days: Math.floor(distance / (1000 * 60 * 60 * 24)),
-          hours: Math.floor(
-            (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-          ),
-          minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
-          seconds: Math.floor((distance % (1000 * 60)) / 1000),
-        });
-      } else if (now >= startTime && now < endTime) {
-        const distance = endTime - now;
+        const diff = start - current;
+        setTimeLeft({ h: Math.floor(diff / 3600000), m: Math.floor(diff / 60000 % 60), s: Math.floor(diff / 1000 % 60) });
+      } else if (current < end) {
         setAuctionStatus("live");
-        setTimeLeft({
-          days: Math.floor(distance / (1000 * 60 * 60 * 24)),
-          hours: Math.floor(
-            (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-          ),
-          minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
-          seconds: Math.floor((distance % (1000 * 60)) / 1000),
-        });
-      } else {
-        setAuctionStatus("ended");
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-      }
+        const diff = end - current;
+        setTimeLeft({ h: Math.floor(diff / 3600000), m: Math.floor(diff / 60000 % 60), s: Math.floor(diff / 1000 % 60) });
+      } else setAuctionStatus("ended");
     }, 1000);
+
     return () => clearInterval(timer);
-  }, []);
+  }, [auctionData]);
 
-  const formatCurrency = (amount) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-    }).format(amount);
+  // Show modal if live and no user cookie
+  useEffect(() => {
+    if (!getCookie("auctionUser") && auctionStatus === "live") setShowModal(true);
+  }, [auctionStatus, getCookie]);
 
-  const getStatusColor = () => {
-    switch (auctionStatus) {
-      case "not_started":
-        return "bg-orange-500 hover:bg-orange-600";
-      case "live":
-        return "bg-red-500 hover:bg-red-600 animate-pulse";
-      case "ended":
-        return "bg-gray-500 hover:bg-gray-600";
-      default:
-        return "bg-gray-500";
-    }
+  if (error) return <div className="h-screen flex items-center justify-center text-red-600">{error}</div>;
+  if (!auctionData) return <div className="h-screen flex items-center justify-center text-gray-400">Loading auction details...</div>;
+
+  const statusStyles = {
+    not_started: { label: "Starts In", gradient: "from-yellow-400 via-orange-500 to-red-500", btnColor: "bg-orange-500 cursor-default", icon: <Clock className="w-5 h-5" /> },
+    live: { label: "LIVE NOW", gradient: "from-green-400 via-emerald-500 to-teal-600", btnColor: "bg-green-600 cursor-pointer animate-pulse", icon: <Play className="w-5 h-5" /> },
+    ended: { label: "Auction Ended", gradient: "from-gray-400 via-gray-500 to-gray-600", btnColor: "bg-gray-500 cursor-not-allowed", icon: <Eye className="w-5 h-5" /> },
   };
-
-  const getStatusText = () => {
-    switch (auctionStatus) {
-      case "not_started":
-        return "Starting Soon";
-      case "live":
-        return "Live";
-      case "ended":
-        return "Ended";
-      default:
-        return "Starting Soon";
-    }
-  };
-
-  const getStatusIcon = () => {
-    switch (auctionStatus) {
-      case "not_started":
-        return <Clock className="w-5 h-5" />;
-      case "live":
-        return <Play className="w-5 h-5" />;
-      case "ended":
-        return <Eye className="w-5 h-5" />;
-      default:
-        return <Clock className="w-5 h-5" />;
-    }
-  };
-
-  const handleStickyButtonClick = () => {
-    if (auctionStatus === "not_started") return;
-    setShowModal(true); // Trigger modal for role entry
-  };
+  const currentStatus = statusStyles[auctionStatus] || statusStyles.not_started;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4 sm:px-6 lg:px-8">
-      {showModal && (
-        <AuctionEntryModal
-          onSubmit={() => {}}
-          onClose={() => setShowModal(false)}
-        />
-      )}
+    <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0f172a] text-white relative overflow-hidden">
+      {/* Background Glows */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_#3b82f6_0%,_transparent_60%)] opacity-40"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,_#9333ea_0%,_transparent_70%)] opacity-30"></div>
 
-      <div className="max-w-6xl mx-auto">
-        {/* Header & Countdown */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            {sampleAuction.name}
-          </h1>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            {sampleAuction.description}
-          </p>
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-10">
+        {/* Header */}
+        <h1 className="text-4xl md:text-6xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-pink-500 to-purple-500">{auctionData.name}</h1>
+        <p className="text-gray-300 max-w-2xl">{auctionData.description}</p>
 
-          <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 text-white text-center mt-6">
-            <h2 className="text-2xl font-semibold mb-4">
-              {auctionStatus === "not_started"
-                ? "Starts In"
-                : auctionStatus === "live"
-                ? "Time Remaining"
-                : "Auction Ended"}
-            </h2>
+        {/* Status Card */}
+        <div className={`bg-gradient-to-r ${currentStatus.gradient} shadow-lg rounded-3xl p-[1px] my-8`}>
+          <div className="bg-[#0f172a]/90 rounded-3xl py-6 px-6 text-center">
+            <div className="flex justify-center items-center gap-2 mb-3">{currentStatus.icon}<h2 className="text-2xl font-bold">{currentStatus.label}</h2></div>
             {auctionStatus !== "ended" ? (
-              <div className="flex justify-center space-x-8">
-                {timeLeft.days > 0 && (
-                  <div className="text-center">
-                    <div className="text-3xl font-bold">{timeLeft.days}</div>
-                    <div className="text-sm opacity-75">Days</div>
-                  </div>
-                )}
-                <div className="text-center">
-                  <div className="text-3xl font-bold">{timeLeft.hours}</div>
-                  <div className="text-sm opacity-75">Hours</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold">{timeLeft.minutes}</div>
-                  <div className="text-sm opacity-75">Minutes</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold">{timeLeft.seconds}</div>
-                  <div className="text-sm opacity-75">Seconds</div>
-                </div>
+              <div className="flex justify-center gap-6 text-xl font-semibold">
+                <div className="bg-white/10 px-5 py-3 rounded-xl">{timeLeft.h ?? 0}h</div>
+                <div className="bg-white/10 px-5 py-3 rounded-xl">{timeLeft.m ?? 0}m</div>
+                <div className="bg-white/10 px-5 py-3 rounded-xl">{timeLeft.s ?? 0}s</div>
               </div>
-            ) : (
-              <div className="text-2xl font-semibold">
-                Thank you for participating!
-              </div>
-            )}
+            ) : <p className="text-gray-300 text-lg">The auction has concluded.</p>}
           </div>
         </div>
 
-        {/* Teams Section */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-            Participating Teams
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {sampleAuction.teams.map((team, index) => (
-              <div
-                key={index}
-                className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-shadow text-center"
-              >
-                <div className="text-4xl mb-3">{team.logo}</div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {team.name}
-                </h3>
-                <div className="space-y-2 text-sm text-gray-600">
-                  <div className="flex items-center justify-center">
-                    <DollarSign className="w-4 h-4 mr-1 text-green-500" />
-                    <span className="font-medium">
-                      {formatCurrency(team.budget)}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="font-medium">Captain:</span> {team.captain}
-                  </div>
-                  <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    {team.role}
-                  </div>
-                </div>
+        {/* Teams Grid */}
+        <h2 className="text-3xl font-semibold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-pink-500">Participating Teams</h2>
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+          {auctionData.teams?.map(team => (
+            <div key={team._id} className="group relative bg-white/5 rounded-2xl border border-white/10 backdrop-blur-md overflow-hidden hover:scale-[1.02] transition-all duration-300">
+              <div className="absolute inset-0" style={{ backgroundColor: team.color, opacity: 0.3 }}></div>
+              <div className="relative p-6 flex flex-col items-center space-y-3">
+                <div className="w-20 h-20 flex items-center justify-center text-3xl font-bold text-white rounded-full shadow-lg" style={{ backgroundColor: team.color }}>{team.short}</div>
+                <h3 className="text-lg font-semibold text-white">{team.name}</h3>
+                <p className="text-sm italic text-gray-400">“{team.slogan}”</p>
+                <div className="flex items-center gap-1 text-sm text-gray-300"><DollarSign className="w-4 h-4 text-emerald-400" />{team.budget?.toLocaleString()} Credits</div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
 
-        {/* Sticky Button */}
-        <button
-          onClick={handleStickyButtonClick}
-          className={`fixed bottom-6 right-6 ${getStatusColor()} text-white px-6 py-3 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 flex items-center space-x-2 z-50 ${
-            auctionStatus === "not_started"
-              ? "cursor-default"
-              : "cursor-pointer"
-          }`}
-          disabled={auctionStatus === "not_started"}
-        >
-          {getStatusIcon()}
-          <span className="font-semibold">{getStatusText()}</span>
-        </button>
+        {/* Summary Section */}
+        <div className="mt-16 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-lg p-8 text-gray-300">
+          <div className="flex items-center gap-2 mb-6 text-white font-semibold text-lg"><Info className="text-blue-400" /> Auction Summary</div>
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 text-sm">
+            <div><span className="block text-gray-400">Total Teams</span><span className="font-medium text-white">{auctionData.teams?.length ?? 0}</span></div>
+            <div><span className="block text-gray-400">Total Sets</span><span className="font-medium text-white">{auctionData.sets?.length ?? 0}</span></div>
+            <div><span className="block text-gray-400">Initial Budget</span><span className="font-medium text-white">{auctionData.settings?.initialBudget ?? "--"}</span></div>
+            <div><span className="block text-gray-400">Min Bid Increment</span><span className="font-medium text-white">{auctionData.settings?.minBidIncrement ?? "--"}</span></div>
+            <div><span className="block text-gray-400">Bid Time Limit</span><span className="font-medium text-white">{auctionData.settings?.bidTimeLimit ?? "--"}s</span></div>
+            <div><span className="block text-gray-400">Max Extensions</span><span className="font-medium text-white">{auctionData.settings?.maxTimeExtensions ?? "--"}</span></div>
+          </div>
+        </div>
       </div>
+
+      {/* Sticky Auction Button */}
+      <button
+        onClick={() => {
+          const user = getCookie("auctionUser");
+          if (auctionStatus === "live") user ? window.location.href = `/auction/${user.role}` : setShowModal(true);
+        }}
+        className={`fixed bottom-6 right-6 ${currentStatus.btnColor} text-white px-6 py-3 rounded-full flex items-center gap-2 z-50`}
+        disabled={auctionStatus !== "live"}
+      >
+        {currentStatus.icon} <span>{currentStatus.label}</span>
+      </button>
+
+      {/* Modal */}
+      {showModal && <AuctionEntryModal auctionData={auctionData} onClose={() => setShowModal(false)} />}
     </div>
   );
 };

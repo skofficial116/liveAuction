@@ -10,7 +10,7 @@ function Sidebar() {
   const menuItems = [
     {
       name: "Current Bid",
-      path: "/audience/currentBid",
+      path: "/auction/audience/currentBid",
       icon: (
         <>
           <Gavel size={22} strokeWidth={1.5} />
@@ -19,7 +19,7 @@ function Sidebar() {
     },
     {
       name: "Auction History",
-      path: "/audience/auctionHistory",
+      path: "/auction/audience/auctionHistory",
       icon: (
         <>
           <ScrollText size={22} strokeWidth={1.5} />
@@ -28,7 +28,7 @@ function Sidebar() {
     },
     {
       name: "All Teams",
-      path: "/audience/allTeams",
+      path: "/auction/audience/allTeams",
       icon: (
         <>
           <Shield size={22} strokeWidth={1.5} />

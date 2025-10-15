@@ -1,15 +1,10 @@
-import React from "react";    
-
-import { Route, Routes, useMatch } from "react-router-dom";
+import React from "react";
+import { Route, Routes, useLocation } from "react-router-dom";
 import "quill/dist/quill.snow.css";
 import { ToastContainer } from "react-toastify";
 
 // Student Imports
 import Home from "./pages/student/Home.jsx";
-import Player from "./pages/student/Player.jsx";
-import Loading from "./components/student/Loading.jsx";
-
-// import Navbar from "./components/student/Navbar.jsx";
 import Navbar from "./components/student/Navbar.jsx";
 import TeamsPage from "./pages/auction/audience/TeamsPage.jsx";
 import AuctionPage from "./pages/auction/AuctionDetails.jsx";
@@ -25,41 +20,43 @@ import AdminTeamsPage from "./pages/auction/admin/TeamPage.jsx";
 import ManageSetsPage from "./pages/auction/admin/ManageSets.jsx";
 import ManagePlayersPage from "./pages/auction/admin/ManagePlayersPage.jsx";
 import AdminSettings from "./pages/auction/admin/Settings.jsx";
-const App = () => {
-  const isAdminRoute = useMatch("/admin/*");
-  const isCaptainRoute = useMatch("/captain/*");
-  const isAudienceRoute = useMatch("/audience/*");
+import AudienceNavbar from "./components/auction/audience/AudienceNavbar.jsx";
+import Dashboard from "./pages/auction/admin/Dashboard.jsx";
 
-  const renderNavbar = () => {
-    if (!isAdminRoute && !isCaptainRoute && !isAudienceRoute) return <Navbar />;
-  };
+const App = () => {
+  const location = useLocation();
+
+  // Paths where you DON'T want the AudienceNavbar to show
+  const hideNavbarPaths = ["/dashboard"];
+
+  const shouldShowAudienceNavbar = !hideNavbarPaths.includes(location.pathname);
 
   return (
-    <div className="text-default min-h-screen  bg-gradient-to-b from-[#3C467B] via-[#50589C] to-[#636CCB]">
-      <ToastContainer></ToastContainer>
+    <div className="text-default min-h-screen bg-gradient-to-b from-[#3C467B] via-[#50589C] to-[#636CCB]">
+      <ToastContainer />
 
-      {renderNavbar()}
+      {shouldShowAudienceNavbar && <AudienceNavbar />}
+
       <Routes>
         {/* Student Routes */}
         <Route path="/" element={<Home />} />
-        <Route path="/auction" element={<AuctionPage />} />
-        <Route path="/player/:courseId" element={<Player />} />
-        <Route path="/loading/:path" element={<Loading />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/auction/:auctionId" element={<AuctionPage />} />
 
-        <Route path="/audience" element={<Audience />}>
+        <Route path="/auction/audience" element={<Audience />}>
           <Route index element={<CurrentBid />} />
           <Route path="currentBid" element={<CurrentBid />} />
           <Route path="auctionHistory" element={<AuctionHistory />} />
           <Route path="allTeams" element={<TeamsPage />} />
         </Route>
-        <Route path="/captain" element={<Captain />}>
+        <Route path="/auction/captain" element={<Captain />}>
           <Route index element={<CaptainCurrentBid />} />
           <Route path="currentBid" element={<CaptainCurrentBid />} />
           <Route path="auctionHistory" element={<AuctionHistory />} />
           <Route path="allTeams" element={<TeamsPage />} />
           <Route path="myTeam" element={<MyTeamPage />} />
         </Route>
-        <Route path="/admin" element={<Admin />}>
+        <Route path="/auction/admin" element={<Admin />}>
           <Route index element={<AdminCurrentBid />} />
           <Route path="currentBid" element={<AdminCurrentBid />} />
           <Route path="auctionHistory" element={<AuctionHistory />} />
@@ -74,6 +71,7 @@ const App = () => {
 };
 
 export default App;
+
 // import "./App.css";
 // import { useState, useEffect } from "react";
 
@@ -136,6 +134,5 @@ export default App;
 //     </div>
 //   );
 // }
-
 
 // export default App;
